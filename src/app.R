@@ -17,7 +17,7 @@ ui <- fluidPage(
   titlePanel("A flood loss example"),
   sidebarLayout(position = "left",
     sidebarPanel("",
-                 selectInput(inputId = "in_return_period", label = "Return period",
+                 selectInput(inputId = "return_period", label = "Return period",
                              choices = return_periods)),
     mainPanel("",
               leafletOutput("map_area")
@@ -31,8 +31,8 @@ server <- function(input, output) {
     leaflet() %>%
       addTiles() %>%
       addPolygons(data = loss_map) %>%
-      addRasterImage(raster(flood_maps[input$in_return_period]), colors = color_palette, opacity = 0.8) %>%
-      addLegend(pal = color_palette, values = values(raster(flood_maps[input$in_return_period])), title = "Max. water depth")
+      addRasterImage(raster(flood_maps[input$return_period]), colors = color_palette, opacity = 0.8) %>%
+      addLegend(pal = color_palette, values = values(raster(flood_maps[input$return_period])), title = "Max. water depth")
       })
 }
 
