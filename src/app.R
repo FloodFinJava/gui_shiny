@@ -8,8 +8,7 @@ loss_map <- readOGR("/home/laurent/Dropbox/FloodFinJava/geodata/central_java_hos
 flood_maps <- list('200'=raster("/home/laurent/Dropbox/FloodFinJava/geodata/JBA/Sample data/Semarang/ID_FLRF_UD_Q200_RD_031.tif"),
                    '1500'=raster("/home/laurent/Dropbox/FloodFinJava/geodata/JBA/Sample data/Semarang/ID_FLRF_UD_Q1500_RD_031.tif"))
 return_periods <- names(flood_maps)
-
-color_palette <-  colorNumeric(palette = "YlGnBu", domain = c(0,30), na.color=NA)
+color_palette <-  colorNumeric(palette = "YlGnBu", domain = values(flood_maps[['1500']]), na.color=NA)
 
 # UI
 ui <- fluidPage(
