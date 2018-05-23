@@ -2,6 +2,7 @@ library(shiny)
 library(leaflet)
 library(rgdal)
 library(raster)
+library(htmltools)
 
 # Maps
 loss_map <- readOGR("/home/laurent/Dropbox/FloodFinJava/geodata/central_java_hospitals_losses.gpkg")
@@ -28,7 +29,7 @@ server <- function(input, output) {
   output$map_area <- renderLeaflet({
     leaflet() %>%
       addTiles() %>%
-      addPolygons(data = loss_map) %>%
+      addPolygons(data = loss_map, popup = htmlEscape(loss_map$name)) %>%
       addRasterImage(flood_maps[[input$return_period]], colors = color_palette, opacity = 0.8) %>%
       addLegend(pal = color_palette, values = values(flood_maps[[input$return_period]]), title = "Max. water depth")
       })
