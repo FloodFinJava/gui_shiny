@@ -18,7 +18,9 @@ ui <- fluidPage(
   sidebarLayout(position = "left",
     sidebarPanel("",
                  selectInput(inputId = "return_period", label = "Return period",
-                             choices = return_periods)),
+                             choices = return_periods),
+                 verbatimTextOutput("summary")
+                 ),
     mainPanel("",
               leafletOutput("map_area")
               )
@@ -29,10 +31,13 @@ ui <- fluidPage(
 server <- function(input, output) {
 
   # Set the popup content as reactive elements
-  perc_losses <- reactive({paste0("q", input$return_period, "_perc_losses")})
+  perc_losses <- reactive({sprintf("q%s_perc_losses", input$return_period)})
+  value_loss <- reactive({sprintf("q%s_losses", input$return_period)})
   popup_content <- reactive({paste0("<b>", htmlEscape(loss_map$name), "</b>",
-                          "<br> Value: $", htmlEscape(loss_map$asset_value),
-                          "<br> Losses: ", percent(loss_map[[perc_losses()]]))
+                          sprintf("<br> Value: $%1.0f", loss_map$asset_value),
+                          "<br> Losses: ", percent(loss_map[[perc_losses()]]),
+                          sprintf("<br> Value loss: $%1.0f", loss_map[[value_loss()]])
+                          )
                           })
 
   # Base map
@@ -50,13 +55,16 @@ server <- function(input, output) {
   observe({
     leafletProxy("map_area") %>%
       clearImages() %>%
-      addRasterImage(flood_maps[[input$return_period]], colors = color_palette, opacity = 0.8)
+      addRasterImage(flood_maps[[input$return_period]],
+                     colors = color_palette, opacity = 0.8)
   })
   # draw/update flood map legend
   observe({
     leafletProxy("map_area") %>%
       clearControls() %>%
-      addLegend(pal = color_palette, values = values(flood_maps[[input$return_period]]), title = "Max. water depth")
+      addLegend(pal = color_palette,
+                values = values(flood_maps[[input$return_period]]),
+                title = "Max. water depth")
   })
 }
 
