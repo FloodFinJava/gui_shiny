@@ -3,6 +3,7 @@ library(leaflet)
 library(rgdal)
 library(raster)
 library(htmltools)
+library(scales)
 
 # Maps
 loss_map <- readOGR("/home/laurent/Dropbox/FloodFinJava/geodata/central_java_hospitals_losses.gpkg")
@@ -26,13 +27,22 @@ ui <- fluidPage(
 
 # Server
 server <- function(input, output) {
+
+  returnPeriod <- reactive({input$return_period})
+
+  perc_losses <- reactive({paste0("q", returnPeriod(), "_perc_losses")})
+  popup_content <- reactive({paste0("<b>", htmlEscape(loss_map$name), "</b>",
+                          "<br> Value: $", htmlEscape(loss_map$asset_value),
+                          "<br> Losses: ", percent(loss_map[[perc_losses()]]))
+                          })
+
   output$map_area <- renderLeaflet({
     leaflet() %>%
-      addTiles() %>%
-      addPolygons(data = loss_map, popup = htmlEscape(loss_map$name)) %>%
-      addRasterImage(flood_maps[[input$return_period]], colors = color_palette, opacity = 0.8) %>%
-      addLegend(pal = color_palette, values = values(flood_maps[[input$return_period]]), title = "Max. water depth")
-      })
+    addTiles() %>%
+    addPolygons(data = loss_map, popup = popup_content()) %>%
+    addRasterImage(flood_maps[[returnPeriod()]], colors = color_palette, opacity = 0.8) %>%
+    addLegend(pal = color_palette, values = values(flood_maps[[returnPeriod()]]), title = "Max. water depth")
+    })
 }
 
 shinyApp(ui = ui, server = server)
