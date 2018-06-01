@@ -40,11 +40,22 @@ server <- function(input, output) {
                           )
                           })
 
+  # get flood map extent
+  map_extent <- reactive({flood_maps[[input$return_period]]@extent})
+
+  # Display summary
+  output$summary <- renderPrint({
+  })
+
   # Base map
   output$map_area <- renderLeaflet({
     leaflet() %>%
+      fitBounds(map_extent()@xmin,
+                map_extent()@ymin,
+                map_extent()@xmax,
+                map_extent()@ymax) %>%
       addTiles()
-    })
+  })
   # draw / update the asset polygons
   observe({
     leafletProxy("map_area") %>%
