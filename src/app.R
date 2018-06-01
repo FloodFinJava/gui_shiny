@@ -19,7 +19,7 @@ ui <- fluidPage(
     sidebarPanel("",
                  selectInput(inputId = "return_period", label = "Return period",
                              choices = return_periods),
-                 textOutput("summary")
+                 verbatimTextOutput("summary")
                  ),
     mainPanel("",
               leafletOutput("map_area")
@@ -45,7 +45,11 @@ server <- function(input, output) {
 
   # Display summary
   output$summary <- renderText({
-    sprintf("Total financial losses: $%1.0f", sum(loss_map[[value_loss()]]))
+    paste(
+      sprintf("Number of flooded assets: %1.0f", sum(loss_map[[perc_losses()]] != 0)),
+      sprintf("Total financial losses: $%1.0f", sum(loss_map[[value_loss()]])),
+      sep = '\n'
+    )
   })
 
   # Base map
