@@ -19,7 +19,7 @@ ui <- fluidPage(
     sidebarPanel("",
                  selectInput(inputId = "return_period", label = "Return period",
                              choices = return_periods),
-                 verbatimTextOutput("summary")
+                 textOutput("summary")
                  ),
     mainPanel("",
               leafletOutput("map_area")
@@ -44,7 +44,8 @@ server <- function(input, output) {
   map_extent <- reactive({flood_maps[[input$return_period]]@extent})
 
   # Display summary
-  output$summary <- renderPrint({
+  output$summary <- renderText({
+    sprintf("Total financial losses: $%1.0f", sum(loss_map[[value_loss()]]))
   })
 
   # Base map
