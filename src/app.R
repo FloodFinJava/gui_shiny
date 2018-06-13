@@ -6,7 +6,7 @@ library(htmltools)
 library(scales)
 
 # Maps
-loss_map <- readOGR("/home/laurent/Dropbox/FloodFinJava/geodata/central_java_hospitals_losses.gpkg")
+loss_map <- readOGR("/home/laurent/Dropbox/FloodFinJava/geodata/asset_losses.gpkg")
 flood_maps <- list('200'=raster("/home/laurent/Dropbox/FloodFinJava/geodata/JBA/Sample data/Semarang/ID_FLRF_UD_Q200_RD_031.tif"),
                    '1500'=raster("/home/laurent/Dropbox/FloodFinJava/geodata/JBA/Sample data/Semarang/ID_FLRF_UD_Q1500_RD_031.tif"))
 return_periods <- names(flood_maps)
@@ -19,6 +19,8 @@ ui <- fluidPage(
     sidebarPanel("",
                  selectInput(inputId = "return_period", label = "Return period",
                              choices = return_periods),
+                 checkboxGroupInput("amenity", "Type of assets", selected = c("hospital"),
+                                    choices = unique(loss_map$amenity), inline = TRUE),
                  verbatimTextOutput("summary")
                  ),
     mainPanel("",
@@ -32,25 +34,28 @@ ui <- fluidPage(
 server <- function(input, output) {
 
   # Set the popup content as reactive elements
-  perc_losses <- reactive({sprintf("q%s_perc_losses", input$return_period)})
-  value_loss <- reactive({sprintf("q%s_losses", input$return_period)})
+  perc_losses <- reactive({sprintf("Q%s_perc_losses", input$return_period)})
   popup_content <- reactive({paste0("<b>", htmlEscape(loss_map$name), "</b>",
-                          sprintf("<br> Value (MRp): %s", prettyNum(loss_map$asset_value,
-                                                                    big.mark=" ", scientific=F)),
-                          "<br> Losses: ", percent(loss_map[[perc_losses()]]),
-                          sprintf("<br> Value loss (MRp): %s", format(loss_map[[value_loss()]],
-                                                                      big.mark=" ", scientific=F))
-                          )
-                          })
+                      sprintf("<br> Type: %s", htmlEscape(loss_map$amenity)),
+                      sprintf("<br> Value (MRp): %s", prettyNum(loss_map$asset_value,
+                                                                big.mark=" ", scientific=F)),
+                      "<br> Losses: ", percent(loss_map[[perc_losses()]]),
+                      sprintf("<br> Value loss (MRp): %s", format(loss_map[[perc_losses()]] * loss_map$asset_value,
+                                                                  big.mark=" ", scientific=F))
+                      )
+                      })
 
   # get flood map extent
   map_extent <- reactive({flood_maps[[input$return_period]]@extent})
 
+  # A selection of the assets to display (from checkbox)
+  assets_select = reactive({loss_map[is.element(loss_map$amenity, input$amenity),]})
+
   # Display summary
   output$summary <- renderText({
     paste(
-      sprintf("Number of flooded assets: %1.0f", sum(loss_map[[perc_losses()]] != 0)),
-      sprintf("Total financial losses (MRp): %s", format(sum(loss_map[[value_loss()]]),
+      sprintf("Number of flooded assets: %1.0f", sum(assets_select()[[perc_losses()]] != 0)),
+      sprintf("Total financial losses (MRp): %s", format(sum(assets_select()[[perc_losses()]] * assets_select()$asset_value),
                                                          big.mark=" ", scientific=F)),
       sep = '\n'
     )
@@ -69,7 +74,7 @@ server <- function(input, output) {
   observe({
     leafletProxy("map_area") %>%
       clearShapes() %>%
-      addPolygons(data = loss_map, popup = popup_content(), color = "#4daf4a")
+      addPolygons(data = assets_select(), popup = popup_content(), color = "#4daf4a")
   })
   # draw/update flood map
   observe({
