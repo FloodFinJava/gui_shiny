@@ -33,23 +33,23 @@ ui <- fluidPage(
 # Server
 server <- function(input, output) {
 
+  # A selection of the assets to display (from checkbox)
+  assets_select = reactive({loss_map[is.element(loss_map$amenity, input$amenity),]})
+
   # Set the popup content as reactive elements
   perc_losses <- reactive({sprintf("Q%s_perc_losses", input$return_period)})
-  popup_content <- reactive({paste0("<b>", htmlEscape(loss_map$name), "</b>",
-                      sprintf("<br> Type: %s", htmlEscape(loss_map$amenity)),
-                      sprintf("<br> Value (MRp): %s", prettyNum(loss_map$asset_value,
+  popup_content <- reactive({paste0("<b>", htmlEscape(assets_select()$name), "</b>",
+                      sprintf("<br> Type: %s", htmlEscape(assets_select()$amenity)),
+                      sprintf("<br> Value (MRp): %s", prettyNum(assets_select()$asset_value,
                                                                 big.mark=" ", scientific=F)),
-                      "<br> Losses: ", percent(loss_map[[perc_losses()]]),
-                      sprintf("<br> Value loss (MRp): %s", format(loss_map[[perc_losses()]] * loss_map$asset_value,
+                      "<br> Losses: ", percent(assets_select()[[perc_losses()]]),
+                      sprintf("<br> Value loss (MRp): %s", format(assets_select()[[perc_losses()]] * assets_select()$asset_value,
                                                                   big.mark=" ", scientific=F))
                       )
                       })
 
   # get flood map extent
   map_extent <- reactive({flood_maps[[input$return_period]]@extent})
-
-  # A selection of the assets to display (from checkbox)
-  assets_select = reactive({loss_map[is.element(loss_map$amenity, input$amenity),]})
 
   # Display summary
   output$summary <- renderText({
